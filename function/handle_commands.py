@@ -1,7 +1,8 @@
 # handle_commands.py
+import random
+
 from botpy import logging
-from botpy.message import C2CMessage
-from command_constants import CommandType, COMMAND_DESCRIPTIONS
+from command_constants import CommandType, COMMAND_DESCRIPTIONS, RANDOM_REPLY_SUFFIX
 from function.random.lottery import handle_lottery_command
 
 _log = logging.get_logger()
@@ -33,4 +34,5 @@ async def process_user_command(user_openid: str, msg_content: str) -> str:
 
     # 其他所有消息返回默认内容
     else:
-        return f"我收到了你的消息：{msg_content}"
+        random_suffix = random.choice(RANDOM_REPLY_SUFFIX)
+        return f"我收到了你的消息：{msg_content}{random_suffix}"

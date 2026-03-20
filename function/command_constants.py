@@ -37,3 +37,14 @@ COMMAND_DESCRIPTIONS = {
     CommandType.BASE_HELP.value: "查看所有支持的指令",
     CommandType.BASE_ABOUT.value: "查看机器人介绍"
 }
+
+# 随机回复后缀列表
+RANDOM_REPLY_SUFFIX = [
+    "，但是不想理你😜",
+    "，但是不明白你在说什么🤔",
+    "，要不换个指令试试？👉 发送「帮助」查看支持的指令",
+    "，我有点懵懵的～😵",
+    "，虽然收到了，但我选择装没看见😝",
+    "，你说的这个我还不会呢😭",
+    "，其实我不是人工智能哦😁",
+]
