@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import asyncio
 import os
 import time
 
@@ -9,7 +8,7 @@ from botpy.logging import configure_logging
 from logging.handlers import TimedRotatingFileHandler
 from botpy.ext.cog_yaml import read
 from botpy.message import C2CMessage
-from function.handle_commands import process_user_command
+from base.handle_commands import process_user_command
 
 test_config = read(os.path.join(os.path.dirname(__file__), "config.yaml"))
 
