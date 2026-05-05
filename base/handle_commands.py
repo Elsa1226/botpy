@@ -5,7 +5,7 @@ from botpy import logging
 from base.session_manager import global_session_manager, SessionManagerError
 from constants.command_constants import CommandType, COMMAND_DESCRIPTIONS, RANDOM_REPLY_SUFFIX, \
     MULTI_ROUND_COMMANDS, SINGLE_ROUND_COMMANDS, MULTI_ROUND_VALID_CMDS, MULTI_ROUND_DEFAULT_TEMPLATES
-from constants.multi_task_constants import SessionStatus
+from constants.multi_task_constants import SessionStatus, TaskType
 from function.multiTask.rock_paper_scissors import RockPaperScissorsTask
 from function.random.lottery import handle_lottery_command
 
@@ -29,17 +29,22 @@ async def process_user_command(user_openid: str, msg_content: str) -> str:
                 and not session.is_timeout()
         )
 
+    # 2. 多轮任务
     if has_active_session:
-        # 2.1 先校验会话超时（兜底）
+        # 2.1 先校验会话超时
         timeout_msg = session.handle_timeout()
         if timeout_msg:
+            _log.info(f"用户{user_openid}会话已超时")
+            # todo 超时处理逻辑
             return timeout_msg
 
         # 2.2 获取当前任务实例和类型
         active_task = session.active_task
         task_type = active_task.task_type.value
+        _log.info(f"当前任务：{active_task.task_name}")
+        _log.info(f"当前任务类型：{task_type}")
 
-        if msg_content == "状态":
+        if msg_content == CommandType.MULT_BASE_STATUS.value:
             user_openid = session.user_openid
             staus = session.session_status
             active_task = session.active_task
@@ -54,13 +59,13 @@ async def process_user_command(user_openid: str, msg_content: str) -> str:
                    f"任务类型：{task_type}\n" \
                    f"任务实例：{active_task}"
 
-        if msg_content == "记录":
+        if msg_content == CommandType.MULT_BASE_RECORD.value:
             return active_task.get_summary()
 
         # 2.3 通用退出指令：结束任务
-        if msg_content == "结束任务":
-            end_prompt = active_task.get_prompt("end") if hasattr(active_task, "get_prompt") else \
-                MULTI_ROUND_DEFAULT_TEMPLATES["end"].format(task_name=active_task.task_name)
+        if msg_content == CommandType.MULT_BASE_END_MISSION.value:
+            end_prompt = active_task.get_prompt(CommandType.MULT_BASE_END.value) if hasattr(active_task, "get_prompt") else \
+                MULTI_ROUND_DEFAULT_TEMPLATES[CommandType.MULT_BASE_END.value].format(task_name=active_task.task_name)
             session.end_task()  # 结束任务+重置会话状态
             global_session_manager.end_and_archive_session(user_openid, end_type="active_end")
             return end_prompt
@@ -70,8 +75,8 @@ async def process_user_command(user_openid: str, msg_content: str) -> str:
                                                              "get_valid_cmds") else MULTI_ROUND_VALID_CMDS.get(
             task_type, [])
         if msg_content in valid_cmds:
-            # 2.4.1 处理猜拳任务交互（示例）
-            if task_type == "rock_paper_scissors":
+            # 2.4.1 处理猜拳任务交互
+            if task_type == TaskType.RockPaperScissors.value:
                 round_result = active_task.play_round(msg_content)
                 session.update_active_time()  # 更新活跃时间
                 return round_result["msg"]
@@ -90,14 +95,14 @@ async def process_user_command(user_openid: str, msg_content: str) -> str:
                 )
             return invalid_prompt
 
-    # 彩票
-    if msg_content.startswith((CommandType.LOTTERY_SUPER_LOTTO.value,
-                               CommandType.LOTTERY_DOUBLE_COLOR.value)):
-        return handle_lottery_command(msg_content)
-
     if msg_content in SINGLE_ROUND_COMMANDS:
+        # 彩票
+        if msg_content.startswith((CommandType.LOTTERY_SUPER_LOTTO.value,
+                                   CommandType.LOTTERY_DOUBLE_COLOR.value)):
+            return handle_lottery_command(msg_content)
+
         # 帮助
-        if msg_content == CommandType.BASE_HELP.value:
+        elif msg_content == CommandType.BASE_HELP.value:
             # 拼接帮助信息（从常量字典中自动读取）
             help_text = "📖 支持的指令列表：\n"
             for cmd, desc in COMMAND_DESCRIPTIONS.items():
@@ -121,11 +126,11 @@ async def process_user_command(user_openid: str, msg_content: str) -> str:
             # 仅捕获「会话已存在」的异常，兜底提示
             return f"⚠️ 操作失败：{str(e)}\n你当前已有未结束的任务，请先发送「结束任务」退出后再尝试～"
 
-        # 2. 具体业务逻辑（无需捕获异常，移出try块）
+        # 2. 具体业务逻辑
         if msg_content == CommandType.GAME_ROCK_PAPER_SCISSORS.value:
-            guess_task = RockPaperScissorsTask()
-            session.activate_task(guess_task)
-            start_prompt = guess_task.get_prompt("start")
+            rock_paper_scissors = RockPaperScissorsTask()
+            session.activate_task(rock_paper_scissors)
+            start_prompt = rock_paper_scissors.get_prompt(CommandType.MULT_BASE_START.value)
             return start_prompt
 
         # 其他所有消息返回默认内容

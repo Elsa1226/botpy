@@ -4,7 +4,7 @@ from constants.multi_task_constants import SessionStatus
 
 
 class SessionManagerError(Exception):
-    """会话管理器专属异常（自定义，便于定位问题）"""
+    """会话管理器专属异常"""
     pass
 
 
@@ -19,10 +19,7 @@ class SessionManager:
         return self.session_map.get(user_openid)
 
     def create_session(self, user_openid: str) -> UserSession:
-        """
-        纯创建：创建用户会话
-        严格保证：仅当会话不存在时创建，已存在则抛异常（符合业务逻辑）
-        """
+        """创建用户会话，仅当会话不存在时创建，已存在则抛异常"""
         if user_openid in self.session_map:
             raise SessionManagerError(f"用户[{user_openid}]的会话已存在，禁止重复创建！")
 
@@ -39,7 +36,7 @@ class SessionManager:
 
     def end_and_archive_session(self, user_openid: str, end_type: str = "active_end"):
         """
-        结束并归档会话（核心方法）
+        结束并归档会话
         :param user_openid: 用户ID
         :param end_type: 结束类型（active_end/timeout）
         """

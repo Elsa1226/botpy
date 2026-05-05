@@ -11,9 +11,9 @@ from constants.multi_task_constants import TaskType
 class BaseTask:
     """任务基类：定义通用接口+文本获取逻辑"""
     def __init__(self, task_type: TaskType):
-        self.task_type = task_type  # 任务类型（如猜拳）
+        self.task_type = task_type  # 任务类型
         self.task_status = None     # 任务内状态
-        # 任务名称（用于文本模板）
+        # 任务名称
         self.task_name = self._get_task_name()
         # 任务专属模板（无则用通用）
         self.task_templates = MULTI_ROUND_TASK_TEMPLATES.get(self.task_type.value, {})
@@ -27,7 +27,7 @@ class BaseTask:
 
     def get_prompt(self, prompt_type: str, **kwargs) -> str:
         """
-        获取任务文本提示（核心接口）
+        获取任务文本提示
         :param prompt_type: 提示类型（start/end/timeout/invalid_cmd）
         :param kwargs: 动态参数（如round_num/user_win）
         :return: 格式化后的提示文本
@@ -43,6 +43,10 @@ class BaseTask:
     def get_valid_cmds(self) -> list:
         """获取当前任务的合法指令（子类可重写）"""
         return MULTI_ROUND_VALID_CMDS.get(self.task_type.value, [])
+
+    def get_summary(self) -> str:
+        """获取任务总结（子类可重写）"""
+        raise NotImplementedError("子类必须实现get_summary方法")
 
     def reset(self):
         raise NotImplementedError("子类必须实现reset方法")

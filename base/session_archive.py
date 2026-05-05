@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime
 from base.user_session import UserSession
+from constants.multi_task_constants import TaskType
 
 
 class SessionArchive:
@@ -36,7 +37,7 @@ class SessionArchive:
         if session.active_task:
             serialized["task_type"] = session.active_task.task_type.value
             # 猜拳任务数据
-            if serialized["task_type"] == "guess_game":
+            if serialized["task_type"] == TaskType.RockPaperScissors.value:
                 serialized["task_data"] = {
                     "round_num": session.active_task.round_num,
                     "user_win": session.active_task.user_win,
