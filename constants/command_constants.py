@@ -29,7 +29,8 @@ class CommandType(Enum):
     MULT_BASE_INVALID_CMD = "mult_base_invalid_cmd"
 
     # ========== 多轮对话指令 ==========
-    GAME_ROCK_PAPER_SCISSORS = "猜拳"  # 猜拳游戏
+    GAME_ROCK_PAPER_SCISSORS = "猜拳"
+    GAME_GUESS_SHIP_NAME = "猜舰名"
 
 # ========== 指令分类集合 ==========
 # 单次对话指令集合
@@ -60,7 +61,8 @@ MULTI_BASE_BACKEND_COMMANDS = {
 
 # 多轮对话指令集合
 MULTI_ROUND_COMMANDS = {
-    CommandType.GAME_ROCK_PAPER_SCISSORS.value
+    CommandType.GAME_ROCK_PAPER_SCISSORS.value,
+    CommandType.GAME_GUESS_SHIP_NAME.value
 }
 
 # 所有指令前缀（合并两类，用于快速判断）
@@ -76,7 +78,8 @@ COMMAND_DESCRIPTIONS = {
     CommandType.BASE_HELP.value: "查看所有支持的指令",
     CommandType.BASE_ABOUT.value: "查看机器人介绍",
     # 多轮指令
-    CommandType.GAME_ROCK_PAPER_SCISSORS.value: "猜拳游戏（多轮），发送「猜拳」开始游戏，支持：石头/剪刀/布"
+    CommandType.GAME_ROCK_PAPER_SCISSORS.value: "猜拳游戏（多轮），发送「猜拳」开始游戏，支持：石头/剪刀/布",
+    CommandType.GAME_GUESS_SHIP_NAME.value: "猜船名游戏（多轮），发送「猜船名」开始游戏，请输入船名"
 }
 
 MULT_BASE_START = "mult_base_start"
