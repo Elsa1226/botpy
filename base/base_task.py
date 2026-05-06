@@ -19,7 +19,7 @@ class BaseTask:
         self.task_templates = MULTI_ROUND_TASK_TEMPLATES.get(self.task_type.value, {})
 
     def _get_task_name(self) -> str:
-        """获取任务名称（子类可重写）"""
+        """获取任务名称"""
         name_map = {
             TaskType.RockPaperScissors.value: "猜拳游戏",
         }
@@ -40,16 +40,22 @@ class BaseTask:
         # 格式化模板
         return template.format(** kwargs)
 
-    def get_valid_cmds(self) -> list:
-        """获取当前任务的合法指令（子类可重写）"""
-        return MULTI_ROUND_VALID_CMDS.get(self.task_type.value, [])
+    def handle_command(self, msg_content: str) -> str:
+        """处理用户指令"""
+        raise NotImplementedError("子类必须实现handle_command方法")
+
+    def get_valid_cmds(self) -> list | bool:
+        """获取当前任务的合法指令"""
+        raise NotImplementedError("子类必须实现get_valid_cmds方法")
 
     def get_summary(self) -> str:
-        """获取任务总结（子类可重写）"""
+        """获取任务总结"""
         raise NotImplementedError("子类必须实现get_summary方法")
 
     def reset(self):
+        """重置任务状态"""
         raise NotImplementedError("子类必须实现reset方法")
 
     def end(self):
+        """结束任务"""
         raise NotImplementedError("子类必须实现end方法")

@@ -4,8 +4,9 @@ import random
 from botpy import logging
 from base.session_manager import global_session_manager, SessionManagerError
 from constants.command_constants import CommandType, COMMAND_DESCRIPTIONS, RANDOM_REPLY_SUFFIX, \
-    MULTI_ROUND_COMMANDS, SINGLE_ROUND_COMMANDS, MULTI_ROUND_VALID_CMDS, MULTI_ROUND_DEFAULT_TEMPLATES
-from constants.multi_task_constants import SessionStatus, TaskType
+    MULTI_ROUND_COMMANDS, SINGLE_ROUND_COMMANDS, MULTI_ROUND_DEFAULT_TEMPLATES
+from constants.multi_task_constants import SessionStatus
+from function.multiTask.guess_ship_name import GuessShipNameTask
 from function.multiTask.rock_paper_scissors import RockPaperScissorsTask
 from function.random.lottery import handle_lottery_command
 
@@ -41,7 +42,6 @@ async def process_user_command(user_openid: str, msg_content: str) -> str:
         # 2.2 获取当前任务实例和类型
         active_task = session.active_task
         task_type = active_task.task_type.value
-        _log.info(f"当前任务：{active_task.task_name}")
         _log.info(f"当前任务类型：{task_type}")
 
         if msg_content == CommandType.MULT_BASE_STATUS.value:
@@ -70,30 +70,10 @@ async def process_user_command(user_openid: str, msg_content: str) -> str:
             global_session_manager.end_and_archive_session(user_openid, end_type="active_end")
             return end_prompt
 
-        # 2.4 判断是否为当前任务的合法指令
-        valid_cmds = active_task.get_valid_cmds() if hasattr(active_task,
-                                                             "get_valid_cmds") else MULTI_ROUND_VALID_CMDS.get(
-            task_type, [])
-        if msg_content in valid_cmds:
-            # 2.4.1 处理猜拳任务交互
-            if task_type == TaskType.RockPaperScissors.value:
-                round_result = active_task.play_round(msg_content)
-                session.update_active_time()  # 更新活跃时间
-                return round_result["msg"]
-            # 2.4.2 拓展：其他多轮任务（如猜谜语）
-            # elif task_type == "riddle":
-            #     return active_task.handle_riddle(msg_content)
-            else:
-                return f"当前{active_task.task_name}暂未实现该指令处理逻辑"
-
-        # 2.5 非法指令 → 返回阻断提示
-        else:
-            invalid_prompt = active_task.get_prompt("invalid_cmd") if hasattr(active_task, "get_prompt") else \
-                MULTI_ROUND_DEFAULT_TEMPLATES["invalid_cmd"].format(
-                    task_name=active_task.task_name,
-                    valid_cmds="、".join(valid_cmds)
-                )
-            return invalid_prompt
+        # 2.4 处理任务交互
+        result = active_task.handle_command(msg_content)
+        session.update_active_time()  # 更新活跃时间
+        return result["msg"]
 
     if msg_content in SINGLE_ROUND_COMMANDS:
         # 彩票
@@ -127,16 +107,22 @@ async def process_user_command(user_openid: str, msg_content: str) -> str:
             return f"⚠️ 操作失败：{str(e)}\n你当前已有未结束的任务，请先发送「结束任务」退出后再尝试～"
 
         # 2. 具体业务逻辑
-        if msg_content == CommandType.GAME_ROCK_PAPER_SCISSORS.value:
-            rock_paper_scissors = RockPaperScissorsTask()
-            session.activate_task(rock_paper_scissors)
-            start_prompt = rock_paper_scissors.get_prompt(CommandType.MULT_BASE_START.value)
-            return start_prompt
+        match msg_content:
+            case CommandType.GAME_ROCK_PAPER_SCISSORS.value:
+                rock_paper_scissors = RockPaperScissorsTask()
+                session.activate_task(rock_paper_scissors)
+                start_prompt = rock_paper_scissors.get_prompt(CommandType.MULT_BASE_START.value)
+                return start_prompt
+            case CommandType.GAME_GUESS_SHIP_NAME.value:
+                guess_ship_name = GuessShipNameTask()
+                session.activate_task(guess_ship_name)
+                start_prompt = guess_ship_name.get_prompt(CommandType.MULT_BASE_START.value)
+                return start_prompt
 
-        # 其他所有消息返回默认内容
-        else:
-            random_suffix = random.choice(RANDOM_REPLY_SUFFIX)
-            return f"我收到了你的消息：{msg_content}{random_suffix}"
+            # 其他所有消息返回默认内容
+            case _:
+                random_suffix = random.choice(RANDOM_REPLY_SUFFIX)
+                return f"我收到了你的消息：{msg_content}{random_suffix}"
 
 
     # 其他所有消息返回默认内容
